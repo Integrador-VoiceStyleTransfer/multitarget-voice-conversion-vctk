@@ -62,7 +62,7 @@ def getSpeakerIdDict(speaker_info_txt_path):
     speaker_id_by_gender["accents"] = accents
     return speakers_info, speaker_id_by_gender
 
-def read_speaker_info(path='/media/arshsing/Storage/ML/_tensorflow3/VCTK-Corpus/speaker-info.txt'):
+def read_speaker_info(path='/home/julian/Documentos/PI_JCL/speaker-info.txt'):
     accent2speaker = defaultdict(lambda: [])
     with open(path) as f:
         splited_lines = [line.strip().split() for line in f][1:]
@@ -85,7 +85,7 @@ root_dir='/storage/datasets/VCTK/VCTK-Corpus/wav48'
 train_split=0.9
 N_speakers = 2
 
-def read_speaker_info(path='/media/arshsing/Storage/ML/_tensorflow3/VCTK-Corpus/speaker-info.txt'):
+def read_speaker_info(path='/home/julian/Documentos/PI_JCL'):
     accent2speaker = defaultdict(lambda: [])
     with open(path) as f:
         splited_lines = [line.strip().split() for line in f][1:]
