@@ -1,10 +1,33 @@
 import h5py
+"""
+ h5py es una interfaz Pythonic para el formato de datos binarios HDF5.
+ Le permite almacenar grandes cantidades de datos numéricos y manipular fácilmente esos datos desde NumPy. 
+ Por ejemplo, puede dividir en conjuntos de datos de varios terabytes almacenados en el disco, como si fueran matrices NumPy reales
+"""
+
 import numpy as np
 import sys
+"""
+El módulo provee acceso a funciones y objetos mantenidos por del intérprete.
+"""
 import os
+"""
+El módulo del sistema operativo en Python proporciona una forma de utilizar el sistema operativo dependiente funcionalidad.
+"""
+
 import glob
+"""
+El módulo glob encuentra todos los nombres de ruta que coinciden con un 
+patrón especificado de acuerdo con las reglas utilizadas por el shell de Unix
+"""
 import re
+"""
+Este módulo proporciona operaciones de coincidencia de expresiones regulares
+"""
+
 from collections import defaultdict
+
+
 #from tacotron.audio import load_wav, spectrogram, melspectrogram
 from tacotron.norm_utils import get_spectrograms
 from tacotron.mcep import wav2mcep
@@ -45,7 +68,7 @@ def getFileList(dir_path, extension):
 #root_dir='/media/arshsing/Storage/ML/_tensorflow3/VCTK-Corpus/wav48'
 #train_split=0.9
 
-def getSpeakerIdDict(speaker_info_txt_path):
+def getSpeakerIdDict(speaker_info_txt_path): #usado para manipular el archivo speaker-info.txt, representando cada fila como un objeto de tipo Speaker
     speakers_info = defaultdict(Speaker)
     speaker_id_by_gender = defaultdict(list)
     root_dir_parts = speaker_info_txt_path.strip().split('/')
@@ -74,12 +97,12 @@ def read_speaker_info(path='/home/julian/Documentos/PI_JCL/speaker-info.txt'):
 
 
 def sample_speakerIds(female_ids,male_ids,N=20):
-    fN = N//2
+    fN = N//2 #  // floor division discards the fractional part
     mN = N//2
-    f_ids = random.sample(female_ids,fN)
-    m_ids = random.sample(male_ids,mN)
-    speakers = f_ids + m_ids
-    return speakers,f_ids,m_ids
+    f_ids = random.sample(female_ids,fN) # selecciona una lista de ids para mujeres al azar de tamaño fN 
+    m_ids = random.sample(male_ids,mN) # selecciona una lista de ids para hombres al azar de tamaño mN
+    speakers = f_ids + m_ids  # crea una lista de speakers ids en donde las primera pocisiones son audios de mujeres y los otros de hombres.
+    return speakers,f_ids,m_ids #retorna la lista de ids juntos e individuales.
 
 root_dir='/storage/datasets/VCTK/VCTK-Corpus/wav48'
 train_split=0.9
@@ -124,30 +147,34 @@ if __name__ == '__main__':
 
     filename_groups = defaultdict(lambda : [])
     speaker_list, females, males = sample_speakerIds(female_ids, male_ids, N_speakers)
-    print(f'Using randomnly sampled ids:{speaker_list}\nFemales:{females},\nMales{males}')
-    with h5py.File(h5py_path, 'w') as f_h5:
+    # speaker_list un lista con todos los ids de los speakers a procesar, females and males son los ids de los hombres y mujeres que se van a procesar, la univon de females y males, da como resultado speaker_list
+    print(f'Using randomnly sampled ids:{speaker_list}\nFemales:{females},\nMales{males}') #imprime la lista de ids que se van a preprocesar.
+    with h5py.File(h5py_path, 'w') as f_h5: #lee el archivo .h5 en el cual se va guardar el preprocesamiento.
         filenames = sorted(glob.glob(os.path.join(root_dir, '*/*.wav')))
-        for filename in filenames:
+        # la función glob encuentra todos los nombres de ruta que coinciden con un patrón especificado de acuerdo con las reglas utilizadas por el shell de Unix
+        for filename in filenames: #lee las rutas de los audios
             # divide into groups
             sub_filename = filename.strip().split('/')[-1]
             # format: p{speaker}_{sid}.wav
             speaker_id, utt_id = re.match(r'p(\d+)_(\d+)\.wav', sub_filename).groups()
-            filename_groups[speaker_id].append(filename)
+            filename_groups[speaker_id].append(filename) #crea un lista con todas las carpetas de los audios
         for speaker_id, filenames in filename_groups.items():
-            if speaker_id not in speaker_list:
+            if speaker_id not in speaker_list: #recore todas las carpetas y si el id no esta en la lista de ids a procesar(speaker_list), continua recorriendo la lista de folders
                 continue
             print('processing {}'.format(speaker_id))
-            print(f'Using randomly sampled ids:{speaker_list}\nFemales:{females},\nMales{males}')
-            train_size = int(len(filenames) * train_split)
+            print(f'Using randomly sampled ids:{speaker_list}\nFemales:{females},\nMales{males}')#indica cuales speaker hombres y mujeres se van a procesar
+            train_size = int(len(filenames) * train_split) # el 0.9 de los audios de cada speaker seleccionado, sera usado para train y el 0.1 para test.
             for i, filename in enumerate(filenames):
-                print(filename)
+                print(filename) # imprime el archivo a preprocesar
                 sub_filename = filename.strip().split('/')[-1]
                 # format: p{speaker}_{sid}.wav
                 speaker_id, utt_id = re.match(r'p(\d+)_(\d+)\.wav', sub_filename).groups()
                 #wav_data = load_wav(filename)
                 #lin_spec = spectrogram(wav_data).astype(np.float32).T
                 #mel_spec = melspectrogram(wav_data).astype(np.float32).T
-                mel_spec, lin_spec = get_spectrograms(filename)
+                mel_spec, lin_spec = get_spectrograms(filename) 
+                
+
                 f0, ap, mc = wav2mcep(filename)
                 #eps = 1e-10
                 #log_mel_spec, log_lin_spec = np.log(mel_spec+eps), np.log(lin_spec+eps)
