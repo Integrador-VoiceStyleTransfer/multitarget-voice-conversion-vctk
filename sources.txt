@@ -1,0 +1,2 @@
+/home/daniel/Documents/programacion/VST/12345.wav
+/home/daniel/Documents/voice_integrador/wav48/p101/p101_001.wav
