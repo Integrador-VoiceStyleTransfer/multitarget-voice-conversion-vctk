@@ -140,6 +140,7 @@ class Solver(object):
 
     def clf_step(self, enc):
         logits = self.SpeakerClassifier(enc)
+        #TODO: Print logits shape 
         return logits
 
     def cal_loss(self, logits, y_true):
@@ -151,7 +152,8 @@ class Solver(object):
     def train(self, model_path, flag='train', mode='train'):
         # load hyperparams
         hps = self.hps
-        if mode == 'pretrain_G':
+        
+        if mode == 'pretrain_G': # Entrena únicamente el encoder y el decoder (stage-1)
             for iteration in range(hps.enc_pretrain_iters):
                 data = next(self.data_loader)
                 c, x = self.permute_data(data)
@@ -159,9 +161,9 @@ class Solver(object):
                 enc = self.encode_step(x)
                 x_tilde = self.decode_step(enc, c)
                 loss_rec = torch.mean(torch.abs(x_tilde - x))
-                reset_grad([self.Encoder, self.Decoder])
+                reset_grad([self.Encoder, self.Decoder]) # permite controlar a dónde quiero mandar cada salida
                 loss_rec.backward()
-                grad_clip([self.Encoder, self.Decoder], self.hps.max_grad_norm)
+                grad_clip([self.Encoder, self.Decoder], self.hps.max_grad_norm) # recorte para que los valores no se salgan
                 self.ae_opt.step()
                 # tb info
                 info = {
@@ -316,9 +318,9 @@ class Solver(object):
                 # maximize classification loss
                 loss = loss_rec - current_alpha * loss_clf
                 reset_grad([self.Encoder, self.Decoder])
-                loss.backward()
+                loss.backward() # perdida conjunta, teniendo en cuenta al ae y al clf
                 grad_clip([self.Encoder, self.Decoder], self.hps.max_grad_norm)
-                self.ae_opt.step()
+                self.ae_opt.step() # optimiza sólo los parámetros del ae, teniendo en cuenta TODOS los parámetros
                 info = {
                     f'{flag}/loss_rec': loss_rec.item(),
                     f'{flag}/G_loss_clf': loss_clf.item(),
