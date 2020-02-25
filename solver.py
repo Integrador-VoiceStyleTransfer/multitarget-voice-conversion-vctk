@@ -44,13 +44,28 @@ class Solver(object):
         self.Decoder = cc(Decoder(ns=ns, c_a=hps.n_speakers, emb_size=emb_size))
         self.Generator = cc(Decoder(ns=ns, c_a=hps.n_speakers, emb_size=emb_size))
         self.SpeakerClassifier = cc(SpeakerClassifier(ns=ns, n_class=hps.n_speakers, dp=hps.dis_dp))
+        self.GoodClassifier = cc(SpeakerClassifier(ns=ns, n_class=hps.n_speakers, dp=hps.dis_dp))
         self.PatchDiscriminator = cc(nn.DataParallel(PatchDiscriminator(ns=ns, n_class=hps.n_speakers)))
         betas = (0.5, 0.9)
         params = list(self.Encoder.parameters()) + list(self.Decoder.parameters())
         self.ae_opt = optim.Adam(params, lr=self.hps.lr, betas=betas)
         self.clf_opt = optim.Adam(self.SpeakerClassifier.parameters(), lr=self.hps.lr, betas=betas)
+        self.good_clf_opt = optim.Adam(self.SpeakerClassifier.parameters(), lr=self.hps.lr, betas=betas)
         self.gen_opt = optim.Adam(self.Generator.parameters(), lr=self.hps.lr, betas=betas)
         self.patch_opt = optim.Adam(self.PatchDiscriminator.parameters(), lr=self.hps.lr, betas=betas)
+
+    def save_good_classifier(self, path, iteration):
+        output_path = os.path.join(os.path.abspath(os.getcwd()), 'models')
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
+        classifier = {
+            'good_classifier': self.GoodClassifier.state_dict()
+        }
+
+        with open(output_path, 'wb') as f_out:
+            torch.save(classifier, f_out)
+
 
     def save_model(self, model_path, iteration, enc_only=True):
         if not enc_only:
@@ -92,6 +107,7 @@ class Solver(object):
         self.Decoder.eval()
         self.Generator.eval()
         self.SpeakerClassifier.eval()
+        self.GoodClassifier.eval()
         self.PatchDiscriminator.eval()
 
     def test_step(self, x, c, gen=False):
@@ -142,6 +158,10 @@ class Solver(object):
         logits = self.SpeakerClassifier(enc)
         return logits
 
+    def good_clf_step(self, enc):
+        logits = self.GoodClassifier(enc)
+        return logits
+
     def cal_loss(self, logits, y_true):
         # calculate loss 
         criterion = nn.CrossEntropyLoss()
@@ -173,6 +193,36 @@ class Solver(object):
                 if iteration % 100 == 0:
                     for tag, value in info.items():
                         self.logger.scalar_summary(tag, value, iteration + 1)
+        elif mode == 'train_good_classifier':
+            # WE NEED TO LOAD THE PRETRAINED AUTOENCODER
+            self.load_model('model.pkl')
+            print(self.SpeakerClassifier)
+            # for iteration in range(hps.dis_pretrain_iters):
+            #     data = next(self.data_loader)
+            #     c, x = self.permute_data(data)
+            #     # encode
+            #     enc = self.encode_step(x)
+            #     # classify speaker
+            #     logits = self.good_clf_step(enc)
+            #     loss_clf = self.cal_loss(logits, c)
+            #     # update 
+            #     reset_grad([self.GoodClassifier])
+            #     loss_clf.backward()
+            #     grad_clip([self.GoodClassifier], self.hps.max_grad_norm)
+            #     self.clf_opt.step()
+            #     # calculate acc
+            #     acc = cal_acc(logits, c)
+            #     info = {
+            #         f'{flag}/pre_loss_clf': loss_clf.item(),
+            #         f'{flag}/pre_acc': acc,
+            #     }
+            #     slot_value = (iteration + 1, hps.dis_pretrain_iters) + tuple([value for value in info.values()])
+            #     log = 'pre_D:[%06d/%06d], loss_clf=%.2f, acc=%.2f'
+            #     print(log % slot_value)
+            #     if iteration % 100 == 0:
+            #         for tag, value in info.items():
+            #             self.logger.scalar_summary(tag, value, iteration + 1)
+        
         elif mode == 'pretrain_D':
             for iteration in range(hps.dis_pretrain_iters):
                 data = next(self.data_loader)
@@ -338,7 +388,7 @@ if __name__ == '__main__':
     hps = Hps()
     hps.load('./hps/v7.json')
     hps_tuple = hps.get_tuple()
-    dataset = myDataset('/storage/raw_feature/voice_conversion/vctk/vctk.h5',\
-            '/storage/raw_feature/voice_conversion/vctk/64_513_2000k.json')
+    dataset = myDataset('/home/daniel/Documents/voice_integrador/vctk.h5',\
+            '/home/daniel/Documents/programacion/multitarget-voice-conversion-vctk/preprocess/speaker_id_by_gender.json')
     data_loader = DataLoader(dataset)
     solver = Solver(hps_tuple, data_loader)

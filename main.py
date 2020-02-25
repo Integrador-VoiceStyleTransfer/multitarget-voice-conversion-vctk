@@ -23,8 +23,8 @@ if __name__ == '__main__':
     parser.add_argument('-flag', default='train')
     parser.add_argument('-hps_path', default='./hps/vctk.json')
     parser.add_argument('-load_model_path', default='')
-    parser.add_argument('-dataset_path', default='/data/home_ext/arshdeep/vctk_h5py/vctk_random20_setok2.h5')
-    parser.add_argument('-index_path', default='vctk_random20_setok2_index.json')
+    parser.add_argument('-dataset_path', default='/home/daniel/Documents/voice_integrador/vctk.h5')
+    parser.add_argument('-index_path', default='/home/daniel/Documents/programacion/multitarget-voice-conversion-vctk/preprocess/speaker_id_by_gender.json')
     parser.add_argument('-output_model_path', default='./models/model_single_sample.pkl')
     args = parser.parse_args()
     hps = Hps()
@@ -45,8 +45,9 @@ if __name__ == '__main__':
     if args.load_model:
         solver.load_model(args.load_model_path)
     if args.train:
-        solver.train(args.output_model_path, args.flag, mode='pretrain_G')
-        solver.train(args.output_model_path, args.flag, mode='pretrain_D')
-        solver.train(args.output_model_path, args.flag, mode='train')
-        solver.train(args.output_model_path, args.flag, mode='patchGAN')
+        solver.train(args.output_model_path, args.flag, mode='train_good_classifier')
+        # solver.train(args.output_model_path, args.flag, mode='pretrain_G')
+        # solver.train(args.output_model_path, args.flag, mode='pretrain_D')
+        # solver.train(args.output_model_path, args.flag, mode='train')
+        # solver.train(args.output_model_path, args.flag, mode='patchGAN')
 
