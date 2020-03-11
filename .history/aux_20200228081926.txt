@@ -1,0 +1,17 @@
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/Angie_000.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/Angie_001.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/Angie_002.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/Angie_003.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/Angie_004.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/Angie_005.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/mono_001.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/mono_002.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/mono_003.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/mono_004.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Daniel/mono_005.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Jose/angelower_1.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Jose/angelower_2.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Jose/angelower_3.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Jose/angelower_4.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Jose/angelower_5.wav
+/home/julian/Documentos/PI_JCL/Audios Encuesta/Audios Jose/angelower_6.wav
