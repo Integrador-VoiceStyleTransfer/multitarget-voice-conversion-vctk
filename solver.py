@@ -118,43 +118,11 @@ class Solver(object):
 
     def test_step(self, x, c, gen=False):
         self.set_eval()
-        print("="*20 + " Test " + "="*20)
-
-        print("="*20 + " X PRE-PERMUTE" + "="*20)
-        print(x.size())
-
-
-        # Check X content and dimensions
-        print("="*20 + " X POST-PERMUTE " + "="*20)
         x = to_var(x).permute(0, 2, 1)
-        # print(x)
-        print(x.size())
-
-        # Check C content and dimensions
-        print("="*20 + " C " + "="*20)
-        # print(c)
-        print(c.size())
-
-        # Check the encoded content and dimensionsk
-        print("="*20 + " Encoded " + "="*20)
         enc = self.Encoder(x)
-        # print(enc)
-        print(enc.size())
-
-
         x_tilde = self.Decoder(enc, c)
-
-        # classify speaker
-        # Check logits content and dimensions
         logits = self.clf_step(enc)
-        # print(logits)
-        print("="*20 + " Logits " + "="*20)
-        print(logits.size())
-        
-        print("="*20 + " Loss clf " + "="*20)
         loss_clf = self.cal_loss(logits, c)
-        print(loss_clf)
-
         if gen:
             x_tilde += self.Generator(enc, c)
         return x_tilde.data.cpu().numpy()
@@ -211,59 +179,6 @@ class Solver(object):
         loss = criterion(logits, y_true)
         return loss
 
-    def test_good_clf(self, x, c, gen=False):
-        print('Voy a hacer el test_good_clf')
-        self.set_eval()
-        x = to_var(x).permute(0, 2, 1)
-        enc = self.Encoder(x)
-
-        logits = self.good_clf_step(enc)
-        
-        return logits
-
-    def probar_clf_bueno(self, source):
-        print('Probando el clasificador bueno')
-        self.load_good_classifier()
-        self.load_model('/home/julian/Documentos/PI_JCL/Experimentos/Experimento 5/single_sample_model_3_spanish_speakers.pkl-149999')
-
-
-        print(type(self.GoodClassifier.dp))
-
-
-        print('Ya cargué los modelos')
-        _, spec = get_spectrograms(source)
-        spec_expand = np.expand_dims(spec, axis=0)
-        spec_tensor = torch.from_numpy(spec_expand).type(torch.FloatTensor)
-        c = Variable(torch.from_numpy(np.array([int(3)]))).cuda()
-        print('Preprocesé el audio de entrada')
-        print(c)
-
-
-        logits = self.test_good_clf(spec_tensor, c) # <-------------- el problema debe estar acá
-        # print(logits)
-        # # logits = logits.data.cpu().numpy()
-        # # print(logits)
-        # acc = cal_acc(logits, c)
-        # print('Ya me dio')
-
-        # print(acc)
-
-
-
-
-        # data = next(self.data_loader)
-        # c, x = self.permute_data(data)
-        # g_clf = self.GoodClassifier(x)
-
-
-
-
-
-
-
-
-
-
     def train(self, model_path, flag='train', mode='train'):
         # load hyperparams
         hps = self.hps
@@ -289,55 +204,10 @@ class Solver(object):
                 if iteration % 100 == 0:
                     for tag, value in info.items():
                         self.logger.scalar_summary(tag, value, iteration + 1)
-        elif mode == 'train_good_classifier':
-            # Load the pretrained model
-            self.load_model('/home/julian/Documentos/PI_JCL/Experimentos/Experimento 5/single_sample_model_3_spanish_speakers.pkl-149999')
-            
-            for iteration in range(hps.dis_pretrain_iters):
-                data = next(self.data_loader)
-                c, x = self.permute_data(data)
-                # encode
-                enc = self.encode_step(x)
-                # classify speaker
-                logits = self.good_clf_step(enc)
-                loss_clf = self.cal_loss(logits, c)
-                # update 
-                reset_grad([self.GoodClassifier])
-                loss_clf.backward()
-                grad_clip([self.GoodClassifier], self.hps.max_grad_norm)
-                self.good_clf_opt.step()
-                # calculate acc
-                acc = cal_acc(logits, c)
-                info = {
-                    f'{flag}/pre_loss_clf': loss_clf.item(),
-                    f'{flag}/pre_acc': acc,
-                }
-                slot_value = (iteration + 1, hps.dis_pretrain_iters) + tuple([value for value in info.values()])
-                log = 'pre_D:[%06d/%06d], loss_clf=%.2f, acc=%.2f'
-                print(log % slot_value)
-                if iteration % 100 == 0:
-                    for tag, value in info.items():
-                        self.logger.scalar_summary(tag, value, iteration + 1)
-
-            self.save_good_classifier()
         elif mode == 'pretrain_D':
             for iteration in range(hps.dis_pretrain_iters):
                 data = next(self.data_loader)
-                print("="*50)
-                print("x pre permute")
-                print(data[1].size())
                 c, x = self.permute_data(data)
-
-                print("="*50)
-                print("x POST-PERMUTE")
-                print(x.size())
-
-                # print("="*50)
-                # print("c")
-                # print(c)
-                # print(c.size())
-
-                
                 # encode
                 enc = self.encode_step(x)
                 # classify speaker

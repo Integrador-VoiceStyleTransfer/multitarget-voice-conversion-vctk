@@ -23,8 +23,8 @@ if __name__ == '__main__':
     parser.add_argument('-flag', default='train')
     parser.add_argument('-hps_path', default='./hps/vctk.json')
     parser.add_argument('-load_model_path', default='/home/julian/Documentos/PI_JCL/Experimentos/Experimento_5/single_sample_model_3_spanish_speakers.pkl-149999')
-    parser.add_argument('-dataset_path', default='/home/julian/Documentos/PI_JCL/Experimentos/Experimento_5/data.h5')
-    parser.add_argument('-index_path', default='/home/julian/Documentos/PI_JCL/Experimentos/Experimento_5/index.json')
+    parser.add_argument('-dataset_path', default='/home/julian/Documentos/PI_JCL/Classifier/clf_test.h5')
+    parser.add_argument('-index_path', default='/home/julian/Documentos/PI_JCL/Classifier/index.json')
     parser.add_argument('-output_model_path', default='./models/model_single_sample.pkl')
     parser.add_argument('--test_clf', default=False, action='store_true')
     args = parser.parse_args()
@@ -40,7 +40,7 @@ if __name__ == '__main__':
                 args.index_path,
                 seg_len=hps_tuple.seg_len, is_h5=args.is_h5)
 
-    data_loader = DataLoader(dataset)
+    data_loader = DataLoader(dataset,1)
 
     solver = Solver(hps_tuple, data_loader)
 

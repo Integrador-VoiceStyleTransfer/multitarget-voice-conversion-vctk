@@ -207,8 +207,6 @@ class SpeakerClassifier(nn.Module):
         self.conv6 = nn.Conv1d(c_h, c_h, kernel_size=5)
         self.conv7 = nn.Conv1d(c_h, c_h//2, kernel_size=3)
         self.conv8 = nn.Conv1d(c_h//2, c_h//4, kernel_size=3)
-        print("Numero de clases")
-        print(n_class)
         self.conv9 = nn.Conv1d(c_h//4, n_class, kernel_size=16)
         self.drop1 = nn.Dropout(p=dp)
         self.drop2 = nn.Dropout(p=dp)
