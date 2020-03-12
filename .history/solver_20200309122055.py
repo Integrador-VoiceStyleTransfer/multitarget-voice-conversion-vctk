@@ -327,6 +327,8 @@ class Solver(object):
                 print("x pre permute")
                 print(data[1].size())
                 c, x = self.permute_data(data)
+                print("C POST-PERMUTE")
+                print(c)
 
                 print("="*50)
                 print("x POST-PERMUTE")

@@ -73,17 +73,17 @@ def read_speaker_info(path='/home/julian/Documentos/PI_JCL/speaker-info.txt'):
     return accent2speaker
 
 
-def sample_speakerIds(female_ids,male_ids,N=20):
-    fN = N//2
-    mN = N//2
-    f_ids = random.sample(female_ids,fN)
-    m_ids = random.sample(male_ids,mN)
+def sample_speakerIds(female_ids,male_ids,N=1):
+    fN = 0
+    mN = 1
+    f_ids = []#random.sample(female_ids,fN)
+    m_ids = ['101']#random.sample(male_ids,mN)
     speakers = f_ids + m_ids
     return speakers,f_ids,m_ids
 
 root_dir='/storage/datasets/VCTK/VCTK-Corpus/wav48'
 train_split=0.9
-N_speakers = 2
+N_speakers = 1
 
 def read_speaker_info(path='/home/julian/Documentos/PI_JCL'):
     accent2speaker = defaultdict(lambda: [])
@@ -116,8 +116,9 @@ if __name__ == '__main__':
 
     with open('speaker_info.pkl', 'wb') as outfile:
         pickle.dump(speaker_info, outfile)
-        x = pickle.load(open('speaker_info.pkl', 'rb'))
-        print(x)
+
+    with open('speaker_info.pkl', 'rb') as input_file:
+        x = pickle.load(input_file)
 
     with open('speaker_id_by_gender.json', 'w') as outfile:
         json.dump(speaker_id_by_gender, outfile)
@@ -151,10 +152,11 @@ if __name__ == '__main__':
                 f0, ap, mc = wav2mcep(filename)
                 #eps = 1e-10
                 #log_mel_spec, log_lin_spec = np.log(mel_spec+eps), np.log(lin_spec+eps)
-                if i < train_size:
-                    datatype = 'train'
-                else:
-                    datatype = 'test'
+                datatype = 'train'
+                # if i < train_size:
+                #     datatype = 'train'
+                # else:
+                #     datatype = 'test'
                 f_h5.create_dataset(f'{datatype}/{speaker_id}/{utt_id}/mel', \
                     data=mel_spec, dtype=np.float32)
                 f_h5.create_dataset(f'{datatype}/{speaker_id}/{utt_id}/lin', \
