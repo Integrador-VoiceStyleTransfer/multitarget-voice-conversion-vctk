@@ -6,47 +6,70 @@ import pickle
 from utils import Hps
 from utils import DataLoader
 from utils import Logger
-from utils import myDataset
 from utils import SingleDataset
 from solver import Solver
 import argparse
 
-#python main.py -dataset_path /data/home_ext/arshdeep/vctk_h5py/vctk_random20_setok2.h5 -index_path ./vctk_random20_setok2_index.json -output_model_path /data/home_ext/arshdeep/models2/single_sample_model.pkl > /data/home_ext/arshdeep/logs/train2_1219.txt
-
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--train', default=True, action='store_true')
-    parser.add_argument('--test', default=False, action='store_true')
-    parser.add_argument('--single', default=True, action='store_true')
-    parser.add_argument('--load_model', default=True, action='store_true')
-    parser.add_argument('--is_h5', default=True, action='store_true')
-    parser.add_argument('-flag', default='train')
-    parser.add_argument('-hps_path', default='./hps/vctk.json')
-    parser.add_argument('-load_model_path', default='/home/julian/Documentos/PI_JCL/Experimentos/Experimento_5/single_sample_model_3_spanish_speakers.pkl-149999')
-    parser.add_argument('-dataset_path', default='/home/julian/Documentos/PI_JCL/Experimentos/Experimento_5/data.h5')
-    parser.add_argument('-index_path', default='/home/julian/Documentos/PI_JCL/Experimentos/Experimento_5/index.json')
-    parser.add_argument('-output_model_path', default='./models/model_single_sample.pkl')
-    parser.add_argument('--test_clf', default=False, action='store_true')
-    args = parser.parse_args()
-    hps = Hps()
-    hps.load(args.hps_path)
-    hps_tuple = hps.get_tuple()
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--load_model', default=False, action='store_true')
+  parser.add_argument('-flag', default='train')
+  parser.add_argument('-hps_path', default='/home/daniel/Documents/voice_conversion/vctk.json')
+  parser.add_argument('-load_model_path', default='/home/daniel/Documents/programacion/multitarget-voice-conversion-vctk/model.pkl')
+  parser.add_argument('-dataset_path', default='/home/daniel/Documents/voice_integrador/vctk_old/data.h5')
+  parser.add_argument('-index_path', default='/home/daniel/Documents/voice_integrador/vctk_old/index.json')
+  parser.add_argument('-output_model_path', default='/home/daniel/Documents/voice_conversion/output.pkl')
 
-    if not args.single:
-        dataset = myDataset(args.dataset_path,
-                args.index_path,
-                seg_len=hps_tuple.seg_len)
-    else:
-        dataset = SingleDataset(args.dataset_path,
-                args.index_path,
-                seg_len=hps_tuple.seg_len, is_h5=args.is_h5)
+  args = parser.parse_args()
+  hps = Hps()
+  hps.load(args.hps_path)
+  hps_tuple = hps.get_tuple()
+  dataset = SingleDataset(args.dataset_path, args.index_path, seg_len=hps_tuple.seg_len)
+  data_loader = DataLoader(dataset)
 
-    data_loader = DataLoader(dataset,1)
-
-    solver = Solver(hps_tuple, data_loader)
-
+  solver = Solver(hps_tuple, data_loader)
+  if args.load_model:
     solver.load_model(args.load_model_path)
 
+  if args.load_model:
+    solver.load_model(args.load_model_path)
 
+  # Speaker Classifier
+  # Congelar hasta conv9 7, dejar la conv8 y reempl
+  layers = list(solver.SpeakerClassifier.children())
+  layers.pop(7)
+  for l in layers:
+    params = l.parameters()
+    for p in params:
+      p.requires_grad = False
+  solver.SpeakerClassifier.conv9 = nn.Conv1d(512//4, 3, kernel_size=16)
 
+  # Decoder
+  # Cambiar las capas de embedding 
+  solver.Decoder.emb1 = nn.Embedding(3, 512)
+  solver.Decoder.emb2 = nn.Embedding(3, 512)
+  solver.Decoder.emb3 = nn.Embedding(3, 512)
+  solver.Decoder.emb4 = nn.Embedding(3, 512)
+  solver.Decoder.emb5 = nn.Embedding(3, 512)
+  # Generator
+  # Cambiar las capas de embedding
+  solver.Generator.emb1 = nn.Embedding(3, 512)
+  solver.Generator.emb2 = nn.Embedding(3, 512)
+  solver.Generator.emb3 = nn.Embedding(3, 512)
+  solver.Generator.emb4 = nn.Embedding(3, 512)
+  solver.Generator.emb5 = nn.Embedding(3, 512)
 
+  # Discriminator
+  # Congelar hasta conv6, dejar conv7 y reemplazar conv_classif
+  layers = list(solver.PatchDiscriminator.module.children())
+  layers.pop(6)
+  for l in layers:
+    params = l.parameters()
+    for p in params:
+      p.requires_grad = False
+  solver.PatchDiscriminator.module.conv_classify =  nn.Conv2d(32, 3, kernel_size=(17, 4))
+
+  solver.train(args.output_model_path, args.flag, mode='pretrain_G')
+  solver.train(args.output_model_path, args.flag, mode='pretrain_D')
+  solver.train(args.output_model_path, args.flag, mode='train')
+  solver.train(args.output_model_path, args.flag, mode='patchGAN')
